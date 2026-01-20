@@ -2,7 +2,6 @@
 name: harvest
 description: Record harvested fees and rewards from a liquidity pool position. Use when claiming fees or rewards from LP positions, tracking whether amounts were compounded (reinvested) or withdrawn. Links harvest data to positions via protocol identifier.
 argument-hint: [protocol] [pair]
-disable-model-invocation: true
 allowed-tools: mcp__google-sheets__get_sheet_data, mcp__google-sheets__update_cells
 ---
 
