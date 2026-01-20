@@ -1,0 +1,53 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__google-sheets__list_spreadsheets",
+      "mcp__google-sheets__get_spreadsheet_info",
+      "mcp__google-sheets__read_range",
+      "mcp__google-sheets__write_range",
+      "Bash(for file in append-sheet clear-range find-sheet list-sheets read-sheet search-sheets sheet-info write-sheet)",
+      "Bash(do mv \"$file\" \"$file.md\")",
+      "Bash(done)",
+      "Bash(ls:*)",
+      "mcp__google-sheets__search_spreadsheets",
+      "Skill(list-sheets)",
+      "Skill(sheet-info)",
+      "Skill(read-sheet)",
+      "Skill(find-sheet)",
+      "Skill(read-liquidity)",
+      "mcp__google-sheets__append_data",
+      "Skill(append-sheet)",
+      "WebSearch",
+      "Bash(python test_drive_api.py:*)",
+      "Bash(/home/felix/Code/Misc/claude-google-sheets-mcp/venv/bin/python:*)",
+      "Bash(journalctl:*)",
+      "Bash(tail:*)",
+      "Bash(find:*)",
+      "Bash(git checkout:*)",
+      "Bash(chmod:*)",
+      "Bash(for file in add-position close-position harvest portfolio)",
+      "Skill(portfolio)",
+      "Skill(harvest)",
+      "mcp__google-sheets__list_sheets",
+      "mcp__google-sheets__get_sheet_data",
+      "mcp__google-sheets__update_cells",
+      "mcp__google-sheets__get_sheet_formulas",
+      "mcp__google-sheets__create_sheet",
+      "mcp__google-sheets__batch_update",
+      "mcp__google-sheets__batch_update_cells",
+      "Bash(python3:*)",
+      "Bash(cat:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git fetch:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git branch:*)",
+      "Bash(git pull:*)",
+      "Bash(git add:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "google-sheets"
+  ]
+}
