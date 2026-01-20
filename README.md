@@ -14,8 +14,7 @@ A Claude Code setup to track cryptocurrency liquidity pool investments across mu
 
 - [Claude Code](https://claude.ai/code) installed
 - Python 3.8+ (for Google Sheets MCP server)
-- Google Cloud project with Sheets API enabled
-- Google OAuth credentials
+- Google account with access to Google Sheets
 
 ## Setup
 
@@ -26,29 +25,16 @@ git clone https://github.com/OuttaSpaceTime/liquidity-tracker-sheet.git
 cd liquidity-tracker-sheet
 ```
 
-### 2. Configure Google Sheets API
+### 2. Install and Configure Google Sheets MCP Server
 
-1. Create a Google Cloud project at [console.cloud.google.com](https://console.cloud.google.com)
-2. Enable the Google Sheets API
-3. Create OAuth 2.0 credentials (Desktop app)
-4. Download credentials and save as `credentials.json` in the project root
+Follow the complete setup instructions at the [Google Sheets MCP server repository](https://github.com/xing5/mcp-google-sheets), which includes:
 
-### 3. Install Google Sheets MCP Server
+- Installing the MCP server
+- Setting up Google Cloud project
+- Configuring OAuth credentials
+- First-time authentication
 
-Clone and set up the [Google Sheets MCP server](https://github.com/xing5/mcp-google-sheets):
-
-```bash
-# Clone the MCP server repository
-git clone https://github.com/xing5/mcp-google-sheets.git
-cd mcp-google-sheets
-
-# Create virtual environment and install
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -e .
-```
-
-### 4. Update MCP Configuration
+### 3. Update MCP Configuration
 
 Edit `.mcp.json` to point to your MCP server installation:
 
@@ -64,7 +50,7 @@ Edit `.mcp.json` to point to your MCP server installation:
 }
 ```
 
-### 5. Create Your Tracking Sheet
+### 4. Create Your Tracking Sheet
 
 1. Create a new Google Sheet or copy the template
 2. Update the `CLAUDE.md` file with your Sheet ID (found in the URL)
