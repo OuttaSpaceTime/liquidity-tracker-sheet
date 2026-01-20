@@ -1,6 +1,7 @@
 ---
 name: read-liquidity
-description: Read and analyze the Liquidity Pools Tracker sheet, providing an overview of open and closed positions with key metrics.
+description: Analyze the Liquidity Pools Tracker and provide comprehensive portfolio overview. Use when checking portfolio performance, reviewing positions, calculating P&L, or getting summary statistics across all LP positions. Shows active/closed positions, fees, rewards, and alerts.
+allowed-tools: mcp__google-sheets__get_sheet_data
 ---
 
 # Read Liquidity Pools Tracker

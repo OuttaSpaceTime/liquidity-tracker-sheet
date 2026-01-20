@@ -1,3 +1,11 @@
+---
+name: add-position
+description: Add a new liquidity pool position to the tracker. Use when creating a new LP position entry across Orca, Aero, Turbos, or other protocols. Automatically assigns protocol numbers, calculates entry values, and creates tracking formulas.
+argument-hint: [protocol] [pair]
+disable-model-invocation: true
+allowed-tools: mcp__google-sheets__get_sheet_data, mcp__google-sheets__update_cells
+---
+
 # Add Position
 
 Add a new liquidity pool position to the Positions sheet with all formulas properly configured.

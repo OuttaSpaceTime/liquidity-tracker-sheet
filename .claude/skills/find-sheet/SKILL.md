@@ -1,3 +1,10 @@
+---
+name: find-sheet
+description: Search for Google Sheets by name with partial matching. Use when locating a spreadsheet by title or when the user needs to find a sheet ID. Returns sheet names, IDs, and direct URLs.
+argument-hint: [sheet-name]
+allowed-tools: mcp__google-sheets__list_spreadsheets
+---
+
 # Find Sheet
 
 Find a Google Sheet by name with partial matching support.

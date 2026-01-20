@@ -1,3 +1,11 @@
+---
+name: close-position
+description: Close out a liquidity pool position. Use when exiting an LP position and recording final withdrawal amounts and prices. Updates position status, final token amounts, and final prices.
+argument-hint: [protocol] [pair]
+disable-model-invocation: true
+allowed-tools: mcp__google-sheets__get_sheet_data, mcp__google-sheets__update_cells
+---
+
 # Close Position
 
 Close a liquidity pool position by updating all required fields in the Positions sheet.
