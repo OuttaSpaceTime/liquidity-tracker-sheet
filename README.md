@@ -35,12 +35,12 @@ cd liquidity-tracker-sheet
 
 ### 3. Install Google Sheets MCP Server
 
-Clone and set up the [Google Sheets MCP server](https://github.com/anthropics/claude-google-sheets-mcp):
+Clone and set up the [Google Sheets MCP server](https://github.com/xing5/mcp-google-sheets):
 
 ```bash
 # Clone the MCP server repository
-git clone https://github.com/anthropics/claude-google-sheets-mcp.git
-cd claude-google-sheets-mcp
+git clone https://github.com/xing5/mcp-google-sheets.git
+cd mcp-google-sheets
 
 # Create virtual environment and install
 python -m venv venv
@@ -57,7 +57,7 @@ Edit `.mcp.json` to point to your MCP server installation:
   "mcpServers": {
     "google-sheets": {
       "type": "stdio",
-      "command": "/path/to/claude-google-sheets-mcp/venv/bin/python",
+      "command": "/path/to/mcp-google-sheets/venv/bin/python",
       "args": ["-m", "claude_google_sheets.server"]
     }
   }
