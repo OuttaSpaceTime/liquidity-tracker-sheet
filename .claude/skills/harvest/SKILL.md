@@ -71,14 +71,36 @@ Based on how the harvest was used:
 - Remaining = amount withdrawn
 - Verify: Compounded + Remaining = Total harvest value
 
-### 4. Preview the Entry
-Show the user what will be added to HarvestLog:
+### 4. Display ASCII Preview Table
+Show the user an ASCII table of what will be added to HarvestLog. Include the row number where the entry will be inserted.
 
-| LP Pair | Protocol | Date | Fees Harvested ($) | Rewards Harvested ($) | Compounded | Remaining |
-|---------|----------|------|-------------------|----------------------|------------|-----------|
-| ... | ... | ... | ... | ... | ... | ... |
+Example format:
+```
+Row {N} will be added to HarvestLog:
 
-### 5. Append to HarvestLog
+┌─────────────┬──────────┬────────────┬─────────────────────┬───────────────────────┬─────────────┬────────────┐
+│ LP Pair (A) │ Protocol │ Date (C)   │ Fees Harvested ($)  │ Rewards Harvested ($) │ Compounded  │ Remaining  │
+│             │ (B)      │            │ (D)                 │ (E)                   │ (F)         │ (G)        │
+├─────────────┼──────────┼────────────┼─────────────────────┼───────────────────────┼─────────────┼────────────┤
+│ SUI/USDC    │ Turbos2  │ 1/26/2026  │ $47.75              │ $20.68                │ $68.43      │ $0.00      │
+└─────────────┴──────────┴────────────┴─────────────────────┴───────────────────────┴─────────────┴────────────┘
+```
+
+Display a summary:
+- Total harvest value: [sum of fees + rewards]
+- Compounded (reinvested): [amount]
+- Withdrawn: [remaining amount]
+- This will update Position sheet totals automatically via SUMIFS formulas
+
+### 5. Ask for Confirmation
+**CRITICAL**: Use `AskUserQuestion` tool to ask the user to confirm before making any changes:
+- Question: "Ready to add this harvest entry to row {N} of the HarvestLog sheet?"
+- Options:
+  - "Yes, add it" (Recommended)
+  - "No, cancel"
+- If user selects "No, cancel", stop and do not proceed with the update
+
+### 6. Append to HarvestLog (Only if Confirmed)
 First, determine the next row in HarvestLog using `mcp__google-sheets__get_sheet_data`:
 - spreadsheet_id: `1DgpluaBYRlprHmmxl8XkaU58SxGgOkXqSUkqfzb653c`
 - sheet: "HarvestLog"
@@ -90,7 +112,7 @@ Then use `mcp__google-sheets__update_cells` to append the row:
 - range: `A{N}:G{N}` (where N is the next row number)
 - data: [[LP Pair, Protocol, Date, Fees ($), Rewards ($), Compounded, Remaining]]
 
-### 6. Report Results
+### 7. Report Results
 After adding:
 - Confirm the harvest was recorded
 - Show which row it was added to

@@ -47,7 +47,9 @@
       "Bash(git commit:*)",
       "Bash(git push)",
       "Skill(close-position)",
-      "Skill(add-position)"
+      "Skill(add-position)",
+      "Bash(grep:*)",
+      "Skill(close-and-harvest)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -27,15 +27,42 @@ When closing a position, I need the following information:
 - Verify the position is currently active (column W = "N")
 - Show the user which position will be closed (row number, entry date, entry value)
 
-### 2. Confirm Data
-Display a preview of what will be updated:
-- Closed status: N → Y
-- Final Amount TokenA (Column X)
-- Final Amount TokenB (Column Y)
-- Current Price TokenA (Column L)
-- Current Price TokenB (Column M)
+### 2. Display ASCII Preview Table
+Show the user an ASCII table comparing the current values with the values that will be set after closing.
 
-### 3. Update the Position
+Example format:
+```
+Position to be closed (Row {N}): {Protocol} {Pair} on {Network}
+
+┌──────────────────┬─────────────────┬─────────────────┐
+│ Field            │ Current Value   │ New Value       │
+├──────────────────┼─────────────────┼─────────────────┤
+│ Closed (W)       │ N               │ Y               │
+│ Curr Price A (L) │ $1.3950         │ $1.4025         │
+│ Curr Price B (M) │ $1.00           │ $1.00           │
+│ Final Amt A (X)  │ [empty]         │ 7384.93         │
+│ Final Amt B (Y)  │ [empty]         │ 0               │
+└──────────────────┴─────────────────┴─────────────────┘
+
+Calculated values after closing:
+- LP Underlying Value (Z): Will use final amounts (X*L + Y*M) = $10,352.45
+- Entry Value: $10,400.00
+- Realized P&L: -$47.55 (-0.46%)
+```
+
+Show the columns that will be updated:
+- Columns L-M (Current prices)
+- Columns W-Y (Closed status and final amounts)
+
+### 3. Ask for Confirmation
+**CRITICAL**: Use `AskUserQuestion` tool to ask the user to confirm before making any changes:
+- Question: "Ready to close this position in row {N} with the values shown above?"
+- Options:
+  - "Yes, close it" (Recommended)
+  - "No, cancel"
+- If user selects "No, cancel", stop and do not proceed with the update
+
+### 4. Update the Position (Only if Confirmed)
 Use `mcp__google-sheets__update_cells` to update columns L, M, W, X, Y:
 - spreadsheet_id: `1DgpluaBYRlprHmmxl8XkaU58SxGgOkXqSUkqfzb653c`
 - sheet: "Positions"
@@ -46,7 +73,7 @@ Then update the status and final amounts:
 - range: `W{N}:Y{N}`
 - data: [["Y", Final Amount TokenA, Final Amount TokenB]]
 
-### 4. Report Results
+### 5. Report Results
 After closing:
 - Confirm the position is marked as closed
 - Show the range that was updated

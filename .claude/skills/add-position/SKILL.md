@@ -112,14 +112,52 @@ Create a row with all 26 columns (A-Z):
 
 Where N is the row number.
 
-### 6. Preview Data
-Show the user:
-- The unique protocol identifier that will be used (e.g., "Turbos2")
-- All data values that will be entered
-- The formulas that will be created (with actual row numbers)
-- Calculated total entry value
+### 6. Display ASCII Preview Table
+Create an ASCII table showing the row that will be added. Include:
+- Row number where data will be inserted
+- The unique protocol identifier (e.g., "Turbos2")
+- All column values (A-Z)
+- Formulas shown with actual row numbers
 
-### 7. Append the Row
+Example format:
+```
+┌──────────────┬────────────┬────────────┬─────────┬────────────┬─────────┬─────────┬─────────┬─────────┬────────┬────────┐
+│ Date         │ Protocol   │ Pair       │ Network │ Range      │ Entry $ │ Entry $ │ Amt A   │ Amt B   │ Total  │ Fees   │
+│ Entered (A)  │ (B)        │ (C)        │ (D)     │ (E)        │ A (F)   │ B (G)   │ (H)     │ (I)     │ $ (J)  │ $ (K)  │
+├──────────────┼────────────┼────────────┼─────────┼────────────┼─────────┼─────────┼─────────┼─────────┼────────┼────────┤
+│ 1/26/2026    │ Turbos2    │ SUI/USDC   │ Sui     │ 1.39-1.70  │ $1.4002 │ $1.00   │ 7430.76 │ 0       │ $10400 │ $5.25  │
+└──────────────┴────────────┴────────────┴─────────┴────────────┴─────────┴─────────┴─────────┴─────────┴────────┴────────┘
+
+┌─────────┬─────────┬──────────┬──────────┬────────────┬────────┬────────┬──────────┐
+│ Curr $  │ Curr $  │ Curr Amt │ Curr Amt │ Accrued    │ Reward │ Reward │ Reward $ │
+│ A (L)   │ B (M)   │ A (N)    │ B (O)    │ Fees $ (P) │ Sym(Q) │ Amt(R) │ (S)      │
+├─────────┼─────────┼──────────┼──────────┼────────────┼────────┼────────┼──────────┤
+│ $1.4002 │ $1.00   │ 7430.76  │ 0        │ $0         │        │        │          │
+└─────────┴─────────┴──────────┴──────────┴────────────┴────────┴────────┴──────────┘
+
+┌──────────────────────────────────────┬──────────────────────────────────────┬──────────────────────────────────────┐
+│ Total Harvested Fees $ (T)           │ Total Harvested Rewards $ (U)        │ Total Compounded $ (V)               │
+├──────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────────┤
+│ =SUMIFS(HarvestLog!D:D,...)          │ =SUMIFS(HarvestLog!E:E,...)          │ =SUMIFS(HarvestLog!$F:$F,...)        │
+└──────────────────────────────────────┴──────────────────────────────────────┴──────────────────────────────────────┘
+
+┌────────┬──────────────┬──────────────┬─────────────────────────────────────────┐
+│ Closed │ Final Amt A  │ Final Amt B  │ LP Underlying Value $ (Z)               │
+│ (W)    │ (X)          │ (Y)          │                                         │
+├────────┼──────────────┼──────────────┼─────────────────────────────────────────┤
+│ N      │              │              │ =IF(WN="Y",(XN*LN)+(YN*MN),(NN*LN)+...) │
+└────────┴──────────────┴──────────────┴─────────────────────────────────────────┘
+```
+
+### 7. Ask for Confirmation
+**CRITICAL**: Use `AskUserQuestion` tool to ask the user to confirm before making any changes:
+- Question: "Ready to add this position to row {N} of the Positions sheet?"
+- Options:
+  - "Yes, add it" (Recommended)
+  - "No, cancel"
+- If user selects "No, cancel", stop and do not proceed with the update
+
+### 8. Append the Row (Only if Confirmed)
 Use `mcp__google-sheets__update_cells` to append the row:
 - spreadsheet_id: `1DgpluaBYRlprHmmxl8XkaU58SxGgOkXqSUkqfzb653c`
 - sheet: `Positions`
@@ -128,7 +166,7 @@ Use `mcp__google-sheets__update_cells` to append the row:
 
 Note: Formulas must be entered as strings (e.g., "=SUMIFS(HarvestLog!D:D,...)") and will be interpreted by Google Sheets
 
-### 8. Report Results
+### 9. Report Results
 After adding:
 - Confirm which row the position was added to
 - Show the actual updated range

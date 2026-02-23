@@ -99,6 +99,12 @@ All skills are located in `.claude/skills/` and work with the Google Sheets MCP 
   - Updates current prices to final prices (columns L-M)
   - Ensures LP Underlying Value formula uses final amounts
 
+- **close-and-harvest**: Harvests fees/rewards and closes a position in a single workflow:
+  - Use when exiting a position that also has a final harvest to record
+  - Previews both the harvest entry and the close changes in one combined table
+  - Requires only a single confirmation before writing both operations
+  - Skips the harvest write automatically if fees and rewards are both $0
+
 ## Common Operations
 
 ### Adding New Position Entry
@@ -127,6 +133,15 @@ All skills are located in `.claude/skills/` and work with the Google Sheets MCP 
    - Columns X-Y: Final token amounts at withdrawal
    - Columns L-M: Current prices at time of closing
 3. LP Underlying Value formula automatically switches to use final amounts
+
+### Harvesting and Closing Together
+1. Use `close-and-harvest` skill when exiting a position that has a final harvest
+2. Provide: Protocol, Pair, harvest amounts (fees/rewards + compounded/withdrawn), final amounts, final prices
+3. The skill will:
+   - Preview both the harvest entry and close changes in one table
+   - Ask for a single confirmation before writing
+   - Write the HarvestLog entry, then close the position
+   - Skip the harvest write if fees and rewards are both $0
 
 ### Analyzing Portfolio
 1. Use `read-liquidity` skill for comprehensive overview
@@ -187,6 +202,7 @@ Quick access commands located in `.claude/commands/`:
 - **/add-position** - Add a new liquidity pool position (invokes add-position skill)
 - **/harvest** - Record harvested fees and rewards (invokes harvest skill)
 - **/close-position** - Close a liquidity pool position (invokes close-position skill)
+- **/close-and-harvest** - Harvest and close a position in one step (invokes close-and-harvest skill)
 - **/portfolio** - Analyze portfolio and positions (invokes read-liquidity skill)
 
 These commands provide quick shortcuts to the most common operations.
