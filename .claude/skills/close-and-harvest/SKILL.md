@@ -13,6 +13,60 @@ Record a final harvest and close a liquidity pool position in one workflow. This
 
 Use this skill when you are fully exiting an LP position and want to record any final fees/rewards at the same time. If you only need to harvest without closing, use the `harvest` skill. If you only need to close without a harvest entry, use the `close-position` skill.
 
+---
+
+## Step 0: Check for Raw UI Text
+
+Before asking the user for data, check whether they have pasted raw UI text from a DeFi platform. This is the most common input method — users copy their position page before or during withdrawal.
+
+**Detection:** If the input contains patterns like "Pending Yield", "Earned", "Swap Fees", "Balance $", "Current Price", "Position Range", token amounts like "144.474911 SOL", or "WETH 9.248", treat it as raw UI text and attempt to parse it.
+
+---
+
+### Parsing: Orca / Turbos UI (Solana, Sui)
+
+| Field | Pattern | Example |
+|---|---|---|
+| Pair | `TOKEN_A / TOKEN_B` at top | `SOL / USDC` |
+| Final Token A amount | `X.xxx TOKEN_A Y.Y% $Z` | `144.474911 SOL 92.0% $11,117.98` |
+| Final Token B amount | `X.xxx TOKEN_B Y.Y% $Z` | `960.365292 USDC 8.0% $960.27` |
+| Final price Token A | `Current Price X.xxx TOKEN_B per TOKEN_A` | `Current Price 76.928139 USDC per SOL` |
+| Final price Token B | Stablecoin = $1.00 | `$1.00` |
+| Total balance | `Balance $X` | `Balance $12,078.25` |
+| Pending yield (fees) | `Pending Yield $X` | `Pending Yield $70.84` |
+| Rewards | separate reward token line if present | — |
+| Status | `In Range` / `Out of Range` | context only |
+
+---
+
+### Parsing: Uniswap / Aero UI (Ethereum, Base)
+
+| Field | Pattern | Example |
+|---|---|---|
+| Pair | Pool title `CL60-WETH/USDC` or `WETH/USDC` | `WETH/USDC` |
+| Final Token A amount | `TOKEN_A\nX.xxx` or `TOKEN_A X.xxx` | `WETH 9.248` |
+| Final Token B amount | `TOKEN_B\nX.xxx` or `TOKEN_B X.xxx` | `USDC 0` |
+| Total deposit value | `Deposit $X` or `Total Deposits $X` | `$16,886.74` |
+| Earned fees (total) | `Earned $X` | `Earned $91.696` |
+| Accrued swap fees | `Swap Fees X.xxx TOKEN_A X.xxx TOKEN_B` | `Swap Fees 0.026 WETH 43.766 USDC` |
+| Protocol | `Uniswap` / `Aero` labels | `Uniswap` |
+
+**Note:** For Uniswap/Aero UI, the current Token A price is usually not shown directly in the position view. If not present, ask the user for the final price of Token A at the time of withdrawal. USDC/USDT is always $1.00.
+
+---
+
+### After Parsing
+
+Once you've extracted what you can:
+
+1. **Show a summary** of all parsed values (harvest amounts + close amounts)
+2. **Identify missing required fields** and ask in a single follow-up:
+   - How the harvest was used: compounded, withdrawn, or split?
+   - Final price for Token A (if not in pasted text)
+   - Any zero-value fields to confirm (e.g., "Rewards harvested = $0, correct?")
+
+---
+
 ## Required Information
 
 Collect all of the following before proceeding:
@@ -27,6 +81,8 @@ Collect all of the following before proceeding:
 5. Final amount TokenB (at withdrawal)
 6. Final price TokenA
 7. Final price TokenB
+
+---
 
 ## Workflow
 
@@ -144,7 +200,7 @@ Confirm both operations completed:
 ## Important Notes
 
 - **Protocol matching is critical.** The Protocol written to HarvestLog column B must exactly match column B in the Positions sheet. Read it directly from the sheet — do not guess or abbreviate.
-- **Date format:** M/D/YYYY. Default to today (2/1/2026) if not specified.
+- **Date format:** M/D/YYYY. Default to today (2/24/2026) if not specified.
 - **Currency format:** Include $ for USD, EUR for euro amounts.
 - **Only one confirmation prompt.** Both operations are previewed together and confirmed together. Do not ask twice.
 - If the harvest amounts are both $0, skip the harvest write entirely and just close the position. Inform the user that no harvest entry was needed.
@@ -164,4 +220,29 @@ Assistant workflow:
 6. User confirms
 7. Writes HarvestLog row 14, then Positions L25:M25, then W25:Y25
 8. Reports both operations complete
+```
+
+```
+User pastes raw Orca UI at time of closing:
+SOL / USDC
+0.04%
+Out of Range
+Balance $11,950.00
+Current Price 74.50 USDC per SOL
+144.474911 SOL  98.0%  $10,762.00
+960.365292 USDC  2.0%  $960.00
+Pending Yield $38.20
+Harvest Yield
+
+Assistant parses:
+- Pair: SOL/USDC
+- Final SOL: 144.474911, Final USDC: 960.365292
+- Final SOL price: $74.50, Final USDC price: $1.00
+- Fees to harvest: $38.20, Rewards: $0
+
+Shows summary and asks: "Fees $38.20, rewards $0 — will this be withdrawn or compounded?"
+User: "withdrawn"
+Reads Positions → finds "Orca3 SOL/USDC" at row 18.
+Reads HarvestLog → next row is 22.
+Shows combined preview → user confirms → writes both.
 ```

@@ -11,31 +11,106 @@ Add a new liquidity pool position to the Positions sheet with all formulas prope
 
 ## Instructions
 
-When adding a new position, I need the following information:
+### Step 0: Check for Raw UI Text
 
-### Required Data
-1. **Date Entered** (default to today if not specified)
-2. **Protocol** (Orca, Aero, Turbos, etc.)
-3. **Pair** (SOL/USDC, ETH/USDC, SUI/USDC, etc.)
-4. **Network** (Solana, Base, Sui)
-5. **Price Range** (format: "low — high")
-6. **Entry Price TokenA** (in USD)
-7. **Entry Price TokenB** (usually $1.00 for USDC)
-8. **Amount TokenA (entry)**
-9. **Amount TokenB (entry)**
+Before asking for data, check whether the user has pasted raw UI text from a DeFi platform (Orca, Turbos, Uniswap, Aero, etc.). Raw UI text is unstructured copy-pasted output from the browser — it typically contains token amounts, prices, ranges, and balances mixed with labels.
 
-### Optional Data
-- **Fees Paid** (transaction fees to enter position)
-- **Current amounts** (if different from entry, otherwise copy entry amounts)
-- **Accrued Fees** (default to $0)
-- **Reward token info** (symbol, amount, price)
+**Detection:** If the input contains patterns like "Balance $", "Pending Yield", "Position Range", "Current Price", "Total Deposits", "Swap Fees", "Deposit", "In Range", "Out of Range", or token amount lines like "144.474911 SOL", treat it as raw UI text and attempt to parse it.
+
+---
+
+### Parsing: Orca / Turbos UI (Solana, Sui)
+
+Orca and Turbos share a similar UI layout. Look for these patterns:
+
+| Field | Pattern | Example |
+|---|---|---|
+| Pair | `TOKEN_A / TOKEN_B` at top | `SOL / USDC` |
+| Fee tier | Standalone `0.04%` or `0.3%` near the pair | `0.04%` |
+| Status | `In Range` or `Out of Range` | `In Range` |
+| Total balance | `Balance $X` | `Balance $12,078.25` |
+| Current price | `Current Price X.xxx TOKEN_B per TOKEN_A` | `Current Price 76.928139 USDC per SOL` |
+| Position range | `Position Range X.xxx — Y.xxx` | `Position Range 75.9962601 — 89.0035477` |
+| Token A amount | Line with `X.xxx TOKEN_A` followed by `%` and `$` | `144.474911 SOL 92.0% $11,117.98` |
+| Token B amount | Line with `X.xxx TOKEN_B` followed by `%` and `$` | `960.365292 USDC 8.0% $960.27` |
+| Pending yield / accrued fees | `Pending Yield $X` | `Pending Yield $70.84` |
+| 24h yield | `24H X.xxx% $X` | `24H 0.531% $64.13` |
+
+**Inferred fields:**
+- Protocol: "Orca" if the UI mentions "Orca" or looks like the Orca interface; "Turbos" if it mentions "Turbos"
+- Network: "Solana" for Orca; "Sui" for Turbos
+- Current price of stablecoin (USDC): always $1.00
+- Entry prices = current prices (for a new position just opened)
+- Entry amounts = current amounts (for a new position just opened)
+
+---
+
+### Parsing: Uniswap / Aero UI (Ethereum, Base)
+
+Uniswap and Aero (Aerodrome on Base) use a similar interface layout. Look for:
+
+| Field | Pattern | Example |
+|---|---|---|
+| Pair | In pool title like `CL60-WETH/USDC` or `WETH/USDC` | `CL60-WETH/USDC` |
+| Fee tier | Standalone `0.3%` near pool name | `0.3%` |
+| Protocol | `Uniswap logo` / `Uniswap` label; `Aero` / `Aerodrome` label | `Uniswap` |
+| Total deposit | `Total Deposits $X` or `Deposit $X` | `Total Deposits $16,886.74` |
+| Token A amount | `TOKEN_A\nX.xxx` or `TOKEN_A X.xxx` | `WETH 9.248` |
+| Token B amount | `TOKEN_B\nX.xxx` or `TOKEN_B X.xxx` | `USDC 0` |
+| Earned (total) | `Earned $X` | `Earned $91.696` |
+| Accrued swap fees | `Swap Fees X.xxx TOKEN_A X.xxx TOKEN_B` | `Swap Fees 0.026 WETH 43.766 USDC` |
+| APR | `APR X%` or `(A/W/D)PR X%` | `10.2%` |
+
+**Inferred fields:**
+- Protocol: "Uniswap" if "Uniswap" appears; "Aero" or "Aerodrome" if those appear
+- Network: "Ethereum" for Uniswap; "Base" for Aero
+- Current price of stablecoin (USDC/USDT): always $1.00
+- Entry value = Total Deposits value
+- Entry amounts = current token amounts (for a freshly opened position)
+- For WETH price: not always in the UI — may need to ask the user
+
+---
+
+### After Parsing
+
+Once you've extracted what you can from the raw text:
+
+1. **Show a summary** of the parsed values in a clear list
+2. **Identify missing required fields** and ask the user for them in a single follow-up question. Required fields you cannot infer:
+   - Protocol (if not identifiable from pasted text)
+   - Network (if not identifiable)
+   - Entry price for Token A (if not a stablecoin and not in pasted text)
+   - Entry price for Token B (if not a stablecoin)
+   - Fees paid to enter the position (transaction fees — ask if not specified, default $0)
+   - Date entered (default to today: 2/24/2026)
+
+---
 
 ## Workflow
 
 ### 1. Collect Information
-Gather all required data from the user. If any required field is missing, ask for it.
+
+Gather all required data — either parsed from raw UI text (Step 0) or asked directly.
+
+**Required Data:**
+1. **Date Entered** (default to today if not specified)
+2. **Protocol** (Orca, Aero, Turbos, Uniswap, etc.)
+3. **Pair** (SOL/USDC, ETH/USDC, SUI/USDC, WETH/USDC, etc.)
+4. **Network** (Solana, Base, Sui, Ethereum)
+5. **Price Range** (format: "low — high")
+6. **Entry Price TokenA** (in USD)
+7. **Entry Price TokenB** (usually $1.00 for USDC/USDT)
+8. **Amount TokenA (entry)**
+9. **Amount TokenB (entry)**
+
+**Optional Data:**
+- **Fees Paid** (transaction fees to enter position, default $0)
+- **Current amounts** (if different from entry, otherwise copy entry amounts)
+- **Accrued Fees** (from pending yield, default to $0)
+- **Reward token info** (symbol, amount, price)
 
 ### 2. Determine Unique Protocol Identifier
+
 **CRITICAL**: Each position must have a unique Protocol identifier for SUMIFS formulas to work correctly.
 
 - Read all existing positions using `mcp__google-sheets__get_sheet_data`:
@@ -72,6 +147,7 @@ Gather all required data from the user. If any required field is missing, ask fo
 - This row number (N) will be used in formulas
 
 ### 5. Build Row Data with Formulas
+
 Create a row with all 26 columns (A-Z):
 
 **Columns A-K (Entry Data):**
@@ -113,6 +189,7 @@ Create a row with all 26 columns (A-Z):
 Where N is the row number.
 
 ### 6. Display ASCII Preview Table
+
 Create an ASCII table showing the row that will be added. Include:
 - Row number where data will be inserted
 - The unique protocol identifier (e.g., "Turbos2")
@@ -150,6 +227,7 @@ Example format:
 ```
 
 ### 7. Ask for Confirmation
+
 **CRITICAL**: Use `AskUserQuestion` tool to ask the user to confirm before making any changes:
 - Question: "Ready to add this position to row {N} of the Positions sheet?"
 - Options:
@@ -158,6 +236,7 @@ Example format:
 - If user selects "No, cancel", stop and do not proceed with the update
 
 ### 8. Append the Row (Only if Confirmed)
+
 Use `mcp__google-sheets__update_cells` to append the row:
 - spreadsheet_id: `1DgpluaBYRlprHmmxl8XkaU58SxGgOkXqSUkqfzb653c`
 - sheet: `Positions`
@@ -167,6 +246,7 @@ Use `mcp__google-sheets__update_cells` to append the row:
 Note: Formulas must be entered as strings (e.g., "=SUMIFS(HarvestLog!D:D,...)") and will be interpreted by Google Sheets
 
 ### 9. Report Results
+
 After adding:
 - Confirm which row the position was added to
 - Show the actual updated range
@@ -216,4 +296,32 @@ Assistant response:
 - Shows preview of all data and formulas
 - Appends to Positions sheet with formulas for row N
 - Confirms success and shows results
+```
+
+```
+User pastes raw Orca UI text:
+SOL / USDC
+0.04%
+In Range
+Balance $12,078.25
+Current Price 76.928139 USDC per SOL
+75.996  89.004
+Position Range 75.9962601 — 89.0035477
+144.474911 SOL  92.0%  $11,117.98
+960.365292 USDC  8.0%  $960.27
+Pending Yield $70.84
+
+Assistant parses:
+- Pair: SOL/USDC
+- Protocol: Orca (inferred)
+- Network: Solana (inferred)
+- Range: 75.9962601 — 89.0035477
+- Current Price SOL: $76.928139
+- SOL amount: 144.474911
+- USDC amount: 960.365292
+- Balance: $12,078.25
+- Accrued fees: $70.84
+
+Then asks: "Parsed the following from your Orca UI. Is this a new position? If so, confirm entry price for SOL was also $76.928139, and provide fees paid to enter."
+Shows preview → confirms → writes row.
 ```

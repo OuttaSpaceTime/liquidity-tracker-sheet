@@ -11,22 +11,61 @@ Record harvested fees and rewards to the HarvestLog sheet for a liquidity pool p
 
 ## Instructions
 
-When recording a harvest, I need the following information:
+### Step 0: Check for Raw UI Text
 
-### Required Data
-1. **LP Pair** (e.g., SOL/USDC, ETH/USDC, SUI/USDC)
-2. **Protocol identifier** (e.g., Turbos2, Orca10, Aero5) - must match exactly with Positions sheet
-3. **Date** (default to today if not specified)
-4. **Fees Harvested ($)** - total fees claimed in USD
-5. **Rewards Harvested ($)** - total rewards claimed in USD (or EUR)
-6. **How the harvest was used:**
-   - Compounded (reinvested back into the position)
-   - Withdrawn (taken out)
-   - Or a combination of both
+Before asking the user for data, check whether they have pasted raw UI text from a DeFi platform. Raw UI text typically contains token amounts, pending yields, and balance information mixed with labels.
+
+**Detection:** If the input contains patterns like "Pending Yield", "Earned", "Swap Fees", "Harvest Yield", "Fees Harvested", or token-denominated fee amounts like "0.026 WETH", treat it as raw UI text and attempt to parse it.
+
+---
+
+### Parsing: Orca / Turbos UI (Solana, Sui)
+
+| Field | Pattern | Example |
+|---|---|---|
+| Pair | `TOKEN_A / TOKEN_B` at top | `SOL / USDC` |
+| Pending yield (total fees) | `Pending Yield $X` | `Pending Yield $70.84` |
+| Harvest yield label | `Harvest Yield` (appears after "Pending Yield $X") | confirms harvesting intent |
+| 24h yield | `24H X.xxx% $X` | `24H 0.531% $64.13` |
+
+From Orca/Turbos UI:
+- **Fees Harvested ($)** = value from `Pending Yield $X`
+- **Rewards Harvested ($)** = 0 unless a separate reward token line is present
+- Protocol/Pair: inferred from pair at top of UI
+
+---
+
+### Parsing: Uniswap / Aero UI (Ethereum, Base)
+
+| Field | Pattern | Example |
+|---|---|---|
+| Pair | Pool title like `CL60-WETH/USDC` | `WETH/USDC` |
+| Earned total | `Earned $X` | `Earned $91.696` |
+| Accrued swap fees | `Swap Fees X.xxx TOKEN_A X.xxx TOKEN_B` | `Swap Fees 0.026 WETH 43.766 USDC` |
+| Protocol | `Uniswap` / `Aero` labels | `Uniswap` |
+
+From Uniswap/Aero UI:
+- **Fees Harvested ($)** = value from `Earned $X` or the dollar-converted swap fees
+- If swap fees are shown per-token (e.g., `0.026 WETH 43.766 USDC`), you need the token price to compute USD value — ask if not known
+- **Rewards Harvested ($)** = 0 for standard Uniswap V3 (no rewards unless it's a farm)
+
+---
+
+### After Parsing
+
+Once you've extracted what you can from the raw text:
+
+1. **Show a summary** of the parsed values
+2. **Identify missing required fields** and ask in a single follow-up:
+   - How the harvest was used: compounded (reinvested), withdrawn, or split?
+   - Exact dollar amounts if only token quantities were in the UI and price is needed
+
+---
 
 ## Workflow
 
 ### 1. Identify the Position
+
 **CRITICAL**: The Protocol identifier must match EXACTLY with the Positions sheet.
 
 - Read the Positions sheet using `mcp__google-sheets__get_sheet_data`:
@@ -48,6 +87,7 @@ Assistant confirms: "Found active Turbos2 SUI/USDC position. Recording harvest f
 ```
 
 ### 2. Collect Harvest Data
+
 Gather:
 - Fees Harvested amount (in $)
 - Rewards Harvested amount (in $ or EUR)
@@ -55,6 +95,7 @@ Gather:
 - How the harvest was used (all compounded / all withdrawn / split)
 
 ### 3. Calculate Compounded and Remaining
+
 Based on how the harvest was used:
 
 **All Compounded (reinvested):**
@@ -72,6 +113,7 @@ Based on how the harvest was used:
 - Verify: Compounded + Remaining = Total harvest value
 
 ### 4. Display ASCII Preview Table
+
 Show the user an ASCII table of what will be added to HarvestLog. Include the row number where the entry will be inserted.
 
 Example format:
@@ -93,6 +135,7 @@ Display a summary:
 - This will update Position sheet totals automatically via SUMIFS formulas
 
 ### 5. Ask for Confirmation
+
 **CRITICAL**: Use `AskUserQuestion` tool to ask the user to confirm before making any changes:
 - Question: "Ready to add this harvest entry to row {N} of the HarvestLog sheet?"
 - Options:
@@ -101,6 +144,7 @@ Display a summary:
 - If user selects "No, cancel", stop and do not proceed with the update
 
 ### 6. Append to HarvestLog (Only if Confirmed)
+
 First, determine the next row in HarvestLog using `mcp__google-sheets__get_sheet_data`:
 - spreadsheet_id: `1DgpluaBYRlprHmmxl8XkaU58SxGgOkXqSUkqfzb653c`
 - sheet: "HarvestLog"
@@ -113,6 +157,7 @@ Then use `mcp__google-sheets__update_cells` to append the row:
 - data: [[LP Pair, Protocol, Date, Fees ($), Rewards ($), Compounded, Remaining]]
 
 ### 7. Report Results
+
 After adding:
 - Confirm the harvest was recorded
 - Show which row it was added to
@@ -171,4 +216,23 @@ Assistant workflow:
 4. Shows preview of HarvestLog entry
 5. Appends: ["SUI/USDC", "Turbos2", "12/27/2025", "$47.75", "$20.68", "$68.43", "$0"]
 6. Confirms success and notes that Position formulas will auto-update
+```
+
+```
+User pastes raw Orca UI:
+SOL / USDC
+0.04%
+In Range
+Balance $12,078.25
+Pending Yield $70.84
+Harvest Yield
+
+Assistant parses:
+- Pair: SOL/USDC
+- Fees to harvest: $70.84
+- Rewards: $0 (none visible)
+
+Then reads Positions sheet, finds active "Orca3 SOL/USDC".
+Asks: "Parsed $70.84 pending yield from Orca SOL/USDC (position: Orca3). Was this all withdrawn, all compounded, or split?"
+User answers → shows preview → confirms → writes HarvestLog row.
 ```
